@@ -10,10 +10,6 @@ fetch-proto:
     {{MKDIR}} "{{TMP_DIR}}"
     {{DOWN}} "https://raw.githubusercontent.com/esclient/protos/{{PROTO_TAG}}/{{PROTO_NAME}}" {{DOWN_OUT}} "{{TMP_DIR}}/{{PROTO_NAME}}"
 
-format:
-    cmake --build build-lint --target clang-format
-    cmake --build build-lint --target cmake-format
-
 lint: fetch-proto
     conan install . --output-folder=build-lint --build=missing -c tools.cmake.cmaketoolchain:generator=Ninja
     cmake -S . -B build-lint \
@@ -47,5 +43,3 @@ test: fetch-proto
         '*/grpc/*' \
         '*/generated/*' \
         --output-file coverage.info
-
-prepare: format lint test
