@@ -7,9 +7,6 @@ on:
         type: string
         required: false
         default: "17"
-      source:
-        type: string
-        required: true
       sonar-inclusions:
         type: string
         required: true
@@ -37,6 +34,7 @@ jobs:
             clang \
             clang-tidy \
             clang-format \
+            cppcheck \
             cmake \
             ninja-build \
             pipx
