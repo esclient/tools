@@ -1,0 +1,156 @@
+name: "lint and test cpp"
+
+on:
+  workflow_call:
+    inputs:
+      cpp-version:
+        type: string
+        required: false
+        default: "17"
+      sonar-inclusions:
+        type: string
+        required: true
+      sonar-exclusions:
+        type: string
+        required: true
+      sonar-coverage-exclusions:
+        type: string
+        required: true
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            clang-tidy \
+            clang-format \
+            cppcheck \
+            cmake \
+            ninja-build \
+            pipx
+          pipx install cpplint
+          pipx install cmakelang
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Set up Conan
+        run: |
+          pip install conan
+          conan profile detect --force
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+      
+      - name: Fetch shared just recipes
+        run: just fetch-tools
+
+      - name: Cache Conan packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2/p
+          key: ${{ runner.os }}-conan-lint-${{ hashFiles('conanfile.py', 'conanfile.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-conan-lint-
+
+      - name: Run lint
+        run: just lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            g++ \
+            cmake \
+            ninja-build \
+            lcov
+
+      - name: Set up Conan
+        run: |
+          pip install conan
+          conan profile detect --force
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Fetch shared just recipes
+        run: just fetch-tools
+
+      - name: Cache Conan packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2/p
+          key: ${{ runner.os }}-conan-test-${{ hashFiles('conanfile.py', 'conanfile.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-conan-test-
+
+      - name: Run tests with coverage
+        run: just test
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.info
+          if-no-files-found: error
+
+      - name: Upload compile commands
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-commands
+          path: build-test/compile_commands.json
+          if-no-files-found: error
+
+  sonarqube:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: .
+
+      - name: Download compile commands
+        uses: actions/download-artifact@v4
+        with:
+          name: compile-commands
+          path: .
+
+      - name: Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.cfamily.compile-commands=compile_commands.json
+            -Dsonar.coverageReportPaths=coverage.info
+            -Dsonar.sources=.
+            -Dsonar.inclusions=${{ inputs.sonar-inclusions }}
+            -Dsonar.exclusions=${{ inputs.sonar-exclusions }}
+            -Dsonar.coverage.exclusions=${{ inputs.sonar-coverage-exclusions }}
+            -Dsonar.sourceEncoding=UTF-8
+
+      - name: Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
