@@ -26,7 +26,7 @@ test: fetch-proto
     cmake -S . -B build-test \
         -G "Ninja" \
         -DCMAKE_TOOLCHAIN_FILE=build-test/conan_toolchain.cmake \
-        -DCMAKE_BUILD_TYPE=Debug \
+        -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DENABLE_COVERAGE=ON
     cmake --build build-test
