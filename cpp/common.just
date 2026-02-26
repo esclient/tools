@@ -42,4 +42,5 @@ test: fetch-proto
         '*/tests/*' \
         '*/grpc/*' \
         '*/generated/*' \
+        --ignore-errors unused \
         --output-file coverage.info
