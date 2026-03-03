@@ -31,12 +31,11 @@ test: fetch-proto
         -DENABLE_COVERAGE=ON
     cmake --build build-test
     cd build-test && ctest --output-on-failure
-    gcovr \
+    cd build-test && gcovr \
         --sonarqube \
-        --output sonar-coverage.xml \
-        --filter 'src/' \
+        --output ../sonar-coverage.xml \
+        --root .. \
+        --filter '\.\./src/' \
         --exclude '_deps/.*' \
-        --exclude 'build-test/.*' \
-        --exclude 'tests/.*' \
-        --exclude 'generated/.*' \
-        build-test
+        --exclude '.*generated/.*' \
+        .
