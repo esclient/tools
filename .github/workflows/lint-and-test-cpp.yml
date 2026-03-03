@@ -77,7 +77,8 @@ jobs:
             g++ \
             cmake \
             ninja-build \
-            lcov
+            lcov \
+            gcovr
 
       - name: Set up Conan
         run: |
