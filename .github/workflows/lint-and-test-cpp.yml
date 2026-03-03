@@ -76,8 +76,10 @@ jobs:
           sudo apt-get install -y \
             g++ \
             cmake \
-            ninja-build
-          pip install gcovr
+            ninja-build \
+            pipx
+          pipx install gcovr
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Set up Conan
         run: |
