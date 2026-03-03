@@ -143,7 +143,7 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.cfamily.compile-commands=compile_commands.json
-            -Dsonar.coverageReportPaths=coverage.info
+            -Dsonar.coverageReportPaths=sonar-coverage.xml
             -Dsonar.sources=.
             -Dsonar.inclusions=${{ inputs.sonar-inclusions }}
             -Dsonar.exclusions=${{ inputs.sonar-exclusions }}

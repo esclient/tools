@@ -44,3 +44,7 @@ test: fetch-proto
         '*/generated/*' \
         --ignore-errors unused \
         --output-file coverage.info
+    gcovr --sonarqube --output sonar-coverage.xml \
+        --filter src/ \
+        --exclude-directories build-test \
+        build-test
