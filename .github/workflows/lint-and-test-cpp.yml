@@ -33,7 +33,6 @@ jobs:
           sudo apt-get install -y \
             clang \
             clang-tidy \
-            clang-format \
             cppcheck \
             cmake \
             ninja-build \

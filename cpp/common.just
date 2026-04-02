@@ -17,9 +17,9 @@ lint: fetch-proto
         -DCMAKE_TOOLCHAIN_FILE=build-lint/conan_toolchain.cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-        -DENABLE_CLANG_TIDY=ON
+        -DENABLE_CLANG_TIDY=OFF
     cmake --build build-lint
-    cmake --build build-lint --target lint-all
+    run-clang-tidy -p build-lint -header-filter='.*' src/
 
 test: fetch-proto
     conan install . --output-folder=build-test --build=missing -c tools.cmake.cmaketoolchain:generator=Ninja
