@@ -41,6 +41,9 @@ jobs:
           pipx install cmakelang
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
       - name: Set up Conan
         run: |
           pip install conan
@@ -62,6 +65,10 @@ jobs:
 
       - name: Run lint
         run: just lint
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
 
   test:
     runs-on: ubuntu-latest
@@ -79,6 +86,9 @@ jobs:
             pipx
           pipx install gcovr
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Set up Conan
         run: |
@@ -101,6 +111,10 @@ jobs:
 
       - name: Run tests with coverage
         run: just test
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
