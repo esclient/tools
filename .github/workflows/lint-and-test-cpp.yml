@@ -6,19 +6,7 @@ on:
       cpp-version:
         type: string
         required: false
-        default: "17"
-      sonar-inclusions:
-        type: string
-        required: true
-      sonar-exclusions:
-        type: string
-        required: true
-      sonar-coverage-exclusions:
-        type: string
-        required: true
-    secrets:
-      SONAR_TOKEN:
-        required: true
+        default: "20"
 
 jobs:
   lint:
@@ -33,7 +21,6 @@ jobs:
           sudo apt-get install -y \
             clang \
             clang-tidy \
-            clang-format \
             cppcheck \
             cmake \
             ninja-build \
@@ -42,9 +29,12 @@ jobs:
           pipx install cmakelang
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
       - name: Set up Conan
         run: |
-          pip install conan
+          pipx install conan
           conan profile detect --force
 
       - name: Install just
@@ -63,6 +53,10 @@ jobs:
 
       - name: Run lint
         run: just lint
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
 
   test:
     runs-on: ubuntu-latest
@@ -80,6 +74,9 @@ jobs:
             pipx
           pipx install gcovr
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Set up Conan
         run: |
@@ -102,67 +99,15 @@ jobs:
 
       - name: Run tests with coverage
         run: just test
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: sonar-coverage.xml 
+          path: coverage.xml 
           if-no-files-found: error
 
-      - name: Upload compile commands
-        uses: actions/upload-artifact@v4
-        with:
-          name: compile-commands
-          path: build-test/compile_commands.json
-          if-no-files-found: error
-
-  sonarqube:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Install compiler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++
-
-      - name: Download coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-report
-          path: .
-
-      - name: Download compile commands
-        uses: actions/download-artifact@v4
-        with:
-          name: compile-commands
-          path: .
-      
-      - name: Prepare compile commands
-        run: |
-          mkdir -p build-test
-          mv compile_commands.json build-test/compile_commands.json
-
-      - name: Scan
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-            -Dsonar.cfamily.compile-commands=build-test/compile_commands.json
-            -Dsonar.coverageReportPaths=sonar-coverage.xml
-            -Dsonar.sources=.
-            -Dsonar.inclusions=${{ inputs.sonar-inclusions }}
-            -Dsonar.exclusions=${{ inputs.sonar-exclusions }}
-            -Dsonar.coverage.exclusions=${{ inputs.sonar-coverage-exclusions }}
-            -Dsonar.sourceEncoding=UTF-8
-
-      - name: Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
