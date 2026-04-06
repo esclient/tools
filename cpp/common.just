@@ -41,8 +41,8 @@ test: fetch-proto
     cmake --build build-test -- {{PARALLEL}}
     cd build-test && ctest --output-on-failure --parallel {{JOBS}}
     cd build-test && gcovr \
-        --sonarqube \
-        --output ../sonar-coverage.xml \
+        --xml \
+        --output ../coverage.xml \
         --root .. \
         --filter '\.\./src/' \
         --exclude '_deps/.*' \
