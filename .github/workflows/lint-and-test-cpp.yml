@@ -6,7 +6,7 @@ on:
       cpp-version:
         type: string
         required: false
-        default: "17"
+        default: "20"
 
 jobs:
   lint:
@@ -34,7 +34,7 @@ jobs:
 
       - name: Set up Conan
         run: |
-          pip install conan
+          pipx install conan
           conan profile detect --force
 
       - name: Install just
